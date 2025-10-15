@@ -1,5 +1,5 @@
-resource "aws_iam_role" "s3_upload_role" {
-  name = "s3_upload_role"
+resource "aws_iam_role" "ec2_role" {
+  name = "ec2_role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -15,29 +15,28 @@ resource "aws_iam_role" "s3_upload_role" {
   })
 }
 
-resource "aws_iam_policy" "s3_upload_policy" {
-  name        = "s3_upload_policy"
-  description = "Policy for uploading to S3"
+resource "aws_iam_role_policy" "s3_write_policy" {
+  name   = "S3WritePolicy"
+  role   = aws_iam_role.ec2_role.id
+
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
+        Effect = "Allow",
         Action = [
-          "s3:PutObject",
-          "s3:GetObject",
-          "s3:ListBucket"
+          "s3:PutObject"
         ],
-        Effect   = "Allow",
         Resource = [
-          "${aws_s3_bucket.static_website_bucket.arn}",
-          "${aws_s3_bucket.static_website_bucket.arn}/*"
+          "arn:aws:s3:::${aws_s3_bucket.my_test_bucket.bucket}/*"
         ]
       }
     ]
   })
 }
 
-resource "aws_iam_role_policy_attachment" "s3_upload_role_attachment" {
-  role       = aws_iam_role.s3_upload_role.name
-  policy_arn = aws_iam_policy.s3_upload_policy.arn
+resource "aws_iam_instance_profile" "ec2_instance_profile" {
+  name = "ec2_instance_profile"
+  role = aws_iam_role.ec2_role.name
 }
+
